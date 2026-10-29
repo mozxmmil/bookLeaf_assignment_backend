@@ -1,22 +1,24 @@
 # Production stack for a VPS: Postgres + API.
 # Nginx runs on the VPS itself (nginx/bookleaf-api.conf) and proxies HTTPS traffic to the API on 127.0.0.1.
 # The frontend is deployed separately on Vercel. Full steps: DEPLOYMENT.md.
-#   cp .env.prod.example .env.prod      # then fill in the values
-#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+#   cp .env.prod.example .env           # then fill in the values (Compose reads .env from this folder by itself)
+#   docker compose -f docker-compose.prod.yml up -d --build
 name: bookleaf-prod
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
+    # Postgres creates this user and database on its first start (empty volume). Changing them later needs a new volume.
     environment:
-      POSTGRES_USER: bookleaf
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.prod}
-      POSTGRES_DB: bookleaf
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
     volumes:
       - pgdata:/var/lib/postgresql/data
     # No published ports: only the api container can reach the database.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bookleaf -d bookleaf"]
+      # $$ = read inside the container, where the variables above are set.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -27,15 +29,18 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # Everything in .env reaches the app. The values under environment are fixed for Docker and win over .env
+    # (so a DATABASE_URL, PORT or NODE_ENV left in .env is ignored).
+    env_file: .env
     environment:
       NODE_ENV: production
       PORT: 4000
-      DATABASE_URL: postgresql://bookleaf:${POSTGRES_PASSWORD}@db:5432/bookleaf
-      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.prod}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
       GEMINI_FALLBACK_MODELS: ${GEMINI_FALLBACK_MODELS:-gemini-3.5-flash-lite}
-      CLIENT_ORIGIN: ${CLIENT_ORIGIN:?set CLIENT_ORIGIN (your Vercel URL) in .env.prod}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:?set CLIENT_ORIGIN (your Vercel URL) in .env}
     # Bound to 127.0.0.1 only: reachable by Nginx on the same machine, not from the internet.
     # Host port 4815 (not 4000/5000/8000...) so it doesn't clash with other apps on a shared VPS.
     ports:

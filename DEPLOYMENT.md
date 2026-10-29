@@ -13,7 +13,7 @@ Browser ──HTTPS──▶ Vercel (Next.js, frontend repo)
 | Part | Repo | Runs on | Config |
 |---|---|---|---|
 | Frontend | [`bookLeaf_assignment_frontend`](https://github.com/mozxmmil/bookLeaf_assignment_frontend) | Vercel | `NEXT_PUBLIC_API_URL` in Vercel's project settings |
-| API + Postgres | `bookLeaf_assignment_backend` (this repo) | VPS, in Docker | `.env.prod` (copied from `.env.prod.example`) |
+| API + Postgres | `bookLeaf_assignment_backend` (this repo) | VPS, in Docker | `.env` in the repo folder on the VPS (copied from `.env.prod.example`) |
 | Reverse proxy | this repo, `nginx/bookleaf-api.conf` | VPS, Nginx installed on the server | domain name in the same file |
 
 - The API runs as a long-lived server, not on serverless functions, because it holds SSE connections open.
@@ -63,19 +63,22 @@ printf 'Host github.com\n  IdentityFile ~/.ssh/bookleaf_deploy\n' >> ~/.ssh/conf
 git clone git@github.com:mozxmmil/bookLeaf_assignment_backend.git
 cd bookLeaf_assignment_backend    # every command below runs from here
 
-cp .env.prod.example .env.prod
+cp .env.prod.example .env
 openssl rand -hex 32    # run twice: one value for POSTGRES_PASSWORD, one for JWT_SECRET
-nano .env.prod          # CLIENT_ORIGIN, POSTGRES_PASSWORD, JWT_SECRET, GEMINI_API_KEY
+nano .env               # CLIENT_ORIGIN, POSTGRES_PASSWORD, JWT_SECRET, GEMINI_API_KEY (POSTGRES_USER/POSTGRES_DB are pre-filled)
 ```
-If you don't have the Vercel URL yet, leave the placeholder in `CLIENT_ORIGIN` and fix it in step 7.
+- Docker Compose reads `.env` from this folder automatically, and passes it to the API container.
+- You don't create the database user by hand. On its first start, the Postgres container creates `POSTGRES_USER` with `POSTGRES_PASSWORD` and the database `POSTGRES_DB`. The API builds its connection string from the same three values, and creates the tables itself (migrations run on start).
+- `DATABASE_URL`, `PORT` and `NODE_ENV` are set by `docker-compose.prod.yml` and win over `.env`, so leave them out.
+- If you don't have the Vercel URL yet, leave the placeholder in `CLIENT_ORIGIN` and fix it in step 7.
 
 ## 4. Start the API and database
-First check that port 4815 is free (no output = free). If it's taken, put another free port in `API_PORT` in `.env.prod` and in both `proxy_pass` lines of `nginx/bookleaf-api.conf`.
+First check that port 4815 is free (no output = free). If it's taken, put another free port in `API_PORT` in `.env` and in both `proxy_pass` lines of `nginx/bookleaf-api.conf`.
 ```bash
 sudo ss -tlnp | grep ':4815 '
 ```
 ```bash
-echo "alias dc='docker compose -f docker-compose.prod.yml --env-file .env.prod'" >> ~/.bashrc && source ~/.bashrc
+echo "alias dc='docker compose -f docker-compose.prod.yml'" >> ~/.bashrc && source ~/.bashrc
 dc up -d --build        # the first build takes a few minutes
 dc ps                   # db and api should become "healthy"; api shows 127.0.0.1:4815->4000/tcp
 dc logs api | tail -5   # look for "BookLeaf API on ..." (4000 is the port inside the container)
@@ -121,7 +124,7 @@ What the Nginx file does (`nginx/bookleaf-api.conf`):
 | Env var | `NEXT_PUBLIC_API_URL=https://api.yourdomain.com` |
 
 - `NEXT_PUBLIC_*` values are built into the bundle, so after changing one, **redeploy** on Vercel.
-- Then set `CLIENT_ORIGIN` in `.env.prod` to the Vercel production URL exactly, with no trailing slash. Apply it with `dc up -d` (this recreates only the API).
+- Then set `CLIENT_ORIGIN` in `.env` to the Vercel production URL exactly, with no trailing slash. Apply it with `dc up -d` (this recreates only the API).
 - Preview deployments get different URLs and are blocked by CORS. Test on the production URL, or add more origins, comma-separated.
 
 ## 8. Smoke test
@@ -136,8 +139,8 @@ What the Nginx file does (`nginx/bookleaf-api.conf`):
 | API logs | `dc logs -f api` |
 | Nginx logs | `sudo tail -f /var/log/nginx/error.log` (and `access.log`) |
 | After editing the Nginx file | `sudo nginx -t && sudo systemctl reload nginx` |
-| Backup | `dc exec -T db pg_dump -U bookleaf bookleaf > backup-$(date +%F).sql` |
-| Restore | `dc exec -T db psql -U bookleaf bookleaf < backup.sql` |
+| Backup | `dc exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > backup-$(date +%F).sql` |
+| Restore | `dc exec -T db sh -c 'psql -U "$POSTGRES_USER" "$POSTGRES_DB"' < backup.sql` |
 | Restart the API | `dc restart api` |
 
 `dc down` keeps the data. `dc down -v` **deletes** the database volume.
@@ -145,8 +148,10 @@ What the Nginx file does (`nginx/bookleaf-api.conf`):
 ## Troubleshooting
 | Symptom | Likely cause |
 |---|---|
-| `502 Bad Gateway` | The API isn't running (`dc ps`, `dc logs api`), or `API_PORT` in `.env.prod` doesn't match `proxy_pass` in the Nginx file |
-| `dc up` says port 4815 is already allocated | Another app on the VPS uses it. Pick a free port (`sudo ss -tlnp` lists used ones), set it as `API_PORT` in `.env.prod`, put the same port in both `proxy_pass` lines, then `dc up -d` and reload Nginx. |
+| `502 Bad Gateway` | The API isn't running (`dc ps`, `dc logs api`), or `API_PORT` in `.env` doesn't match `proxy_pass` in the Nginx file |
+| `dc up` says `set POSTGRES_... in .env` (or `env file .env not found`) | `.env` is missing or incomplete. It must sit next to `docker-compose.prod.yml` and be named exactly `.env`. |
+| API logs show `password authentication failed` | `POSTGRES_USER`, `POSTGRES_PASSWORD` or `POSTGRES_DB` was changed after the first start. Postgres only reads them when its volume is empty. Put the old values back, or, if the DB has nothing to keep, run `dc down -v && dc up -d` (**deletes all data**) and seed again. |
+| `dc up` says port 4815 is already allocated | Another app on the VPS uses it. Pick a free port (`sudo ss -tlnp` lists used ones), set it as `API_PORT` in `.env`, put the same port in both `proxy_pass` lines, then `dc up -d` and reload Nginx. |
 | Certbot fails | DNS doesn't point at the VPS yet, or port 80 is closed in the cloud firewall |
 | Your domain shows the default "Welcome to nginx" page | `server_name` in the site file still says `api.example.com`, or the site isn't linked into `sites-enabled` |
 | Browser console shows a CORS error | `CLIENT_ORIGIN` doesn't exactly match the Vercel URL |

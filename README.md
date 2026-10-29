@@ -63,7 +63,7 @@ bookLeaf_assignment_backend/     (this repo)
 ├── .env.example              # backend config: DB, JWT, Gemini, CORS, dev DB port
 ├── docker-compose.yml        # dev: Postgres on host port 5440
 ├── docker-compose.prod.yml   # VPS: Postgres + API (API on 127.0.0.1:4815 for Nginx), see DEPLOYMENT.md
-├── .env.prod.example         # VPS config for docker-compose.prod.yml
+├── .env.prod.example         # template for the VPS .env (docker-compose.prod.yml)
 ├── Dockerfile                # API image
 ├── nginx/bookleaf-api.conf   # Nginx site for the VPS: reverse proxy, SSE unbuffered (HTTPS via Certbot)
 ├── docker/                   # init SQL (creates the test database)
@@ -92,7 +92,7 @@ The two repos share no code or config. Each has its own `package.json`, `.env` f
 
 | | Local config file | Read in | In production |
 |---|---|---|---|
-| Backend | `.env` | `src/config/env.ts` (validated with zod at startup) | `.env.prod` on the VPS |
+| Backend | `.env` | `src/config/env.ts` (validated with zod at startup) | `.env` on the VPS (from `.env.prod.example`) |
 | Frontend | `.env.local` | `src/lib/api.ts` (`NEXT_PUBLIC_API_URL`) | Vercel → Project Settings → Environment Variables |
 
 ### Key decisions
