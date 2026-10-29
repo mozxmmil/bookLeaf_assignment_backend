@@ -30,7 +30,7 @@ describe('auth', () => {
     const res = await api().post('/api/v1/auth/login').send({ email: AUTHOR_A.email.toUpperCase(), password: AUTHOR_A.password });
     expect(res.status).toBe(200);
     expect(res.headers['set-cookie'][0]).toMatch(/bl_token=.*HttpOnly/);
-    expect(res.body.data.user).toMatchObject({ role: 'AUTHOR', authorId: 'AUT001' });
+    expect(res.body.data.user).toMatchObject({ role: 'AUTHOR', authorId: AUTHOR_A.authorId });
   });
   it('protects routes without a token', async () => {
     const res = await api().get('/api/v1/books');
@@ -69,16 +69,25 @@ describe('books', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.map((b: any) => b.id).sort()).toEqual(['BK001', 'BK002']);
     const bk1 = res.body.data.find((b: any) => b.id === 'BK001');
-    expect(bk1).toMatchObject({ royaltyEarned: 61210, royaltyPaid: 48000, royaltyPending: 13210, isPublished: true });
-    expect(res.body.meta.totals.royaltyPending).toBe(13210 + 3360);
+    expect(bk1).toMatchObject({
+      royaltyEarned: 11970, royaltyPaid: 8400, royaltyPending: 3570, isPublished: true,
+      royaltyPerCopy: 35, lastPayoutDate: '2025-10-15', printPartner: 'In-House',
+      availableOn: ['Amazon India', 'Flipkart', 'BookLeaf Store'],
+    });
+    expect(res.body.meta.totals.royaltyPending).toBe(3570 + 0);
   });
-  it('handles books in production (no ISBN, zero sales)', async () => {
+  it('handles books in production (zero sales, no payout details)', async () => {
     const res = await api().get('/api/v1/books').set(auth(authorB));
-    const prod = res.body.data.find((b: any) => b.id === 'BK007');
-    expect(prod).toMatchObject({ isbn: null, isPublished: false, copiesSold: 0, royaltyPending: 0 });
+    const prod = res.body.data.find((b: any) => b.id === 'BK015');
+    expect(prod).toMatchObject({
+      status: 'In Production - Typesetting', isPublished: false, copiesSold: 0, royaltyPending: 0,
+      royaltyPerCopy: null, lastPayoutDate: null, printPartner: null, availableOn: [],
+    });
+    // Kavita's other book is live with ₹850 pending, under the ₹1,000 payout minimum.
+    expect(res.body.data.find((b: any) => b.id === 'BK016')).toMatchObject({ royaltyPending: 850, belowPayoutThreshold: true });
   });
   it("returns 404 for another author's book", async () => {
-    const res = await api().get('/api/v1/books/BK007').set(auth(authorA));
+    const res = await api().get('/api/v1/books/BK015').set(auth(authorA));
     expect(res.status).toBe(404);
   });
 });
@@ -94,7 +103,7 @@ describe('ticket lifecycle', () => {
 
   it("rejects a bookId that belongs to someone else", async () => {
     const res = await api().post('/api/v1/tickets').set(auth(authorA))
-      .send({ bookId: 'BK007', subject: 'Question about book', description: 'This is a sufficiently long description.' });
+      .send({ bookId: 'BK015', subject: 'Question about book', description: 'This is a sufficiently long description.' });
     expect(res.status).toBe(400);
   });
 
@@ -170,8 +179,10 @@ describe('ticket lifecycle', () => {
     const prompt = fake.calls[0].prompt;
     expect(prompt).toContain('ROYALTY POLICY');
     expect(prompt).not.toContain('PRINTING & QUALITY'); // only the relevant section
-    expect(prompt).toContain('pending: ₹13,210');
+    expect(prompt).toContain('pending: ₹3,570');
     expect(prompt).toContain('Next scheduled payout date');
+    expect(prompt).toContain('Last royalty payout: 15 October 2025');
+    expect(prompt).toContain('Available on: Amazon India, Flipkart, BookLeaf Store');
     const second = await api().post(`/api/v1/admin/tickets/${ticketId}/draft`).set(auth(admin));
     expect(second.body.data.cached).toBe(true);
     expect(fake.calls.length).toBe(1); // no second AI call

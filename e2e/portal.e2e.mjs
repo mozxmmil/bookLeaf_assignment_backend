@@ -7,10 +7,11 @@ import { createRequire } from 'node:module';
 const { chromium } = createRequire(import.meta.url)('playwright');
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const WEB = process.env.WEB_URL ?? 'http://localhost:3000';
 const SHOTS = process.env.SHOTS === '1';
-const shotDir = new URL('./screenshots/', import.meta.url).pathname;
+const shotDir = fileURLToPath(new URL('./screenshots/', import.meta.url)); // pathname breaks on Windows (/C:/...)
 if (SHOTS) fs.mkdirSync(shotDir, { recursive: true });
 
 const browser = await chromium.launch();
@@ -36,7 +37,7 @@ let author, admin, ticketUrl;
 const SUBJECT = `E2E: royalty missing ${Date.now()}`;
 
 await step('wrong password shows an error', async () => {
-  const p = await login(authorCtx, 'priya.sharma@example.com', 'wrong');
+  const p = await login(authorCtx, 'priya.sharma@email.com', 'wrong');
   await p.locator('form [role=alert]').waitFor();
   assert.match(await p.locator('form [role=alert]').innerText(), /Invalid email or password/);
   await shot(p, '01-login-error');
@@ -44,19 +45,19 @@ await step('wrong password shows an error', async () => {
 });
 
 await step('author logs in and sees only own books with royalty figures', async () => {
-  author = await login(authorCtx, 'priya.sharma@example.com', 'author123');
+  author = await login(authorCtx, 'priya.sharma@email.com', 'author123');
   await author.waitForURL('**/author/books');
   await author.getByTestId('book-card').first().waitFor();
   const titles = await author.locator('[data-testid=book-card] h2').allInnerTexts();
-  assert.deepEqual(titles.sort(), ['Monsoon Letters', 'The Silent River']);
+  assert.deepEqual(titles.sort(), ['The Saffron Diaries', 'Whispers of the Ganges']);
   const body = await author.locator('main').innerText();
-  assert.match(body, /₹16,570/); // total pending 13,210 + 3,360
+  assert.match(body, /₹3,570/); // total pending 3,570 + 0
   await shot(author, '02-author-books');
 });
 
 await step('author with a book in production sees stage, not zero royalties', async () => {
   const ctx = await browser.newContext();
-  const p = await login(ctx, 'michael.carter@example.com', 'author123');
+  const p = await login(ctx, 'kavita.deshmukh@email.com', 'author123');
   await p.waitForURL('**/author/books');
   await p.getByText('Currently in').waitFor();
   assert.match(await p.locator('main').innerText(), /Typesetting/);
@@ -73,7 +74,7 @@ await step('author cannot open admin pages (redirected)', async () => {
 
 await step('empty ticket list shows a helpful empty state', async () => {
   const ctx = await browser.newContext();
-  const p = await login(ctx, 'arjun.mehta@example.com', 'author123'); // author with no tickets
+  const p = await login(ctx, 'rohit.kapoor@email.com', 'author123'); // author with no tickets
   await p.waitForURL('**/author/books');
   await p.goto(`${WEB}/author/tickets`);
   await p.getByText("You haven't raised any queries yet").waitFor();
@@ -123,7 +124,7 @@ await step('queue filters by priority', async () => {
 await step('admin opens ticket: AI unavailable banner → manual reply mode', async () => {
   await admin.getByTestId('queue-row').filter({ hasText: SUBJECT }).getByRole('link').click();
   await admin.getByTestId('ai-unavailable').waitFor({ timeout: 10000 });
-  assert.match(await admin.getByTestId('context-panel').innerText(), /₹13,210/); // book context panel
+  assert.match(await admin.getByTestId('context-panel').innerText(), /₹3,570/); // book context panel (Priya, BK001)
 });
 
 await step('admin overrides priority and adds an internal note', async () => {
@@ -173,7 +174,7 @@ await step('author ticket list shows the reply count', async () => {
 
 await step('mobile layout renders without horizontal overflow', async () => {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  const p = await login(ctx, 'priya.sharma@example.com', 'author123');
+  const p = await login(ctx, 'priya.sharma@email.com', 'author123');
   await p.waitForURL('**/author/books');
   await p.getByTestId('book-card').first().waitFor();
   const overflow = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);

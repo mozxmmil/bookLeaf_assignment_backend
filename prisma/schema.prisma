@@ -61,7 +61,7 @@ model User {
 }
 
 model Author {
-  id         String    @id // keeps the id from the dataset (e.g. AUT001)
+  id         String    @id // keeps the id from the dataset (e.g. AUTH001)
   userId     String    @unique
   phone      String?
   city       String?
@@ -85,6 +85,10 @@ model Book {
   royaltyEarned   Decimal   @default(0) @db.Decimal(12, 2)
   royaltyPaid     Decimal   @default(0) @db.Decimal(12, 2)
   // royaltyPending is derived (earned - paid) so it can never drift out of sync
+  royaltyPerCopy  Decimal?  @db.Decimal(10, 2) // null while the book is still in production
+  lastPayoutDate  DateTime? @db.Date // null until the first royalty payout
+  printPartner    String?
+  availableOn     String[]  @default([]) // stores the book is sold on, e.g. Amazon India, Flipkart
   author          Author    @relation(fields: [authorId], references: [id], onDelete: Cascade)
   tickets         Ticket[]
 

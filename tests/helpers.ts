@@ -18,8 +18,8 @@ export async function login(email: string, password: string) {
   return res.body.data.token as string;
 }
 
-export const AUTHOR_A = { email: 'priya.sharma@example.com', password: DEMO_AUTHOR_PASSWORD, authorId: 'AUT001' };
-export const AUTHOR_B = { email: 'michael.carter@example.com', password: DEMO_AUTHOR_PASSWORD, authorId: 'AUT004' };
+export const AUTHOR_A = { email: 'priya.sharma@email.com', password: DEMO_AUTHOR_PASSWORD, authorId: 'AUTH001' };
+export const AUTHOR_B = { email: 'kavita.deshmukh@email.com', password: DEMO_AUTHOR_PASSWORD, authorId: 'AUTH009' };
 export const ADMIN = { email: 'admin@bookleaf.com', password: DEMO_ADMIN_PASSWORD };
 
 /** Scriptable fake LLM: records requests, returns queued responses or throws. */

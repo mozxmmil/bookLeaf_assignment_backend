@@ -4,6 +4,7 @@
  */
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
 const { chromium } = createRequire(import.meta.url)('playwright');
 const WEB = process.env.WEB_URL ?? 'http://localhost:3000';
 const browser = await chromium.launch();
@@ -14,7 +15,7 @@ async function login(email, password) {
   await p.goto(`${WEB}/login`); await p.fill('#email', email); await p.fill('#password', password); await p.click('button[type=submit]');
   return p;
 }
-const author = await login('priya.sharma@example.com', 'author123');
+const author = await login('priya.sharma@email.com', 'author123');
 await author.waitForURL('**/author/books');
 const SUBJECT = `AI path ${Date.now()}`;
 let url;
@@ -37,9 +38,9 @@ await step('LLM classification shows with AI tag', async () => {
 await step('AI draft auto-loads with real facts (pending amount + payout date)', async () => {
   await admin.getByText('AI draft — review before sending').waitFor({ timeout: 10000 });
   const draft = await admin.inputValue('#reply');
-  assert.match(draft, /₹13,210/);
+  assert.match(draft, /₹3,570/); // Priya, BK001
   assert.match(draft, /14 November 2026|November/);
-  await admin.screenshot({ path: new URL('./screenshots/11-admin-ai-draft.png', import.meta.url).pathname, fullPage: false });
+  await admin.screenshot({ path: fileURLToPath(new URL('./screenshots/11-admin-ai-draft.png', import.meta.url)), fullPage: false });
 });
 await step('admin edits draft and sends; marked AI-assisted; author receives live', async () => {
   await author.goto(url); await author.getByText('Live').waitFor({ timeout: 8000 });

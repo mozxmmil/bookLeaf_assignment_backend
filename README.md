@@ -23,8 +23,8 @@ Sign in on the live demo with any of these:
 |---|---|---|
 | Admin | `admin@bookleaf.com` | `admin123` |
 | Admin | `support@bookleaf.com` | `admin123` |
-| Author (2 published books) | `priya.sharma@example.com` | `author123` |
-| Author (one book in production) | `michael.carter@example.com` | `author123` |
+| Author (2 published books) | `priya.sharma@email.com` | `author123` |
+| Author (one book in production, one under the ₹1,000 payout minimum) | `kavita.deshmukh@email.com` | `author123` |
 | Any other author in the dataset | their email from `bookleaf_sample_data.json` | `author123` |
 
 ---
@@ -33,7 +33,7 @@ Sign in on the live demo with any of these:
 
 **Author portal**
 - Email/password login. Every query is scoped to the logged-in author.
-- **My Books**: title, ISBN, genre, publication date, status, MRP, copies sold, royalty earned / paid / pending, plus portfolio totals. Books still in production show a stage tracker instead of zeros. Pending balances under ₹1,000 carry a "rolls over" hint.
+- **My Books**: title, ISBN, genre, publication date, status, MRP, copies sold, royalty earned / paid / pending, plus portfolio totals. Live books also show royalty per copy, last payout date, print partner and the stores they are sold on. Books still in production show a stage tracker instead of zeros. Pending balances under ₹1,000 carry a "rolls over" hint.
 - **Raise a query**: book dropdown (or "General / Account level"), subject, details, and an attachment picker (UI only). Opening the form from a book card pre-selects that book.
 - **My Tickets**: status filters, reply counts, and a threaded conversation that **updates live over SSE** when an admin replies or changes the status. Authors can send follow-ups; a follow-up reopens a resolved ticket.
 
@@ -71,7 +71,7 @@ bookLeaf_assignment_backend/     (this repo)
 ├── nginx/bookleaf-api.conf   # Nginx site for the VPS: reverse proxy, SSE unbuffered (HTTPS via Certbot)
 ├── docker/                   # init SQL (creates the test database)
 ├── prisma/                   # schema.prisma + migrations
-├── data/                     # bookleaf_sample_data.json (seed source)
+├── data/                     # bookleaf_sample_data.json: official BookLeaf dataset (seed source)
 ├── src/
 │   ├── config/env.ts         # zod-validated env (fails fast)
 │   ├── db/                   # Prisma client, enums, seed
@@ -231,7 +231,6 @@ Errors are always `{ "error": { "code": "VALIDATION_ERROR", "message": "...", "d
 
 ## Known limitations and next steps
 
-- **Sample data:** `data/bookleaf_sample_data.json` currently holds a placeholder dataset with the same shape (10 authors, 18 books, 2 in production, zero-payout and below-threshold cases). Drop in the official file and run `npm run db:seed`. The loader accepts snake_case or camelCase and nested or flat books.
 - **Attachments** are UI-only (the file name is stored). Next step: S3/R2 pre-signed uploads.
 - **Background jobs** run in-process. In production, move classification to a queue (BullMQ + Redis) for retries and visibility.
 - **SSE hub is in-memory** (single instance). To scale out, back it with Redis pub/sub.

@@ -46,7 +46,7 @@ paths:
               type: object
               required: [email, password]
               properties:
-                email: { type: string, format: email, example: priya.sharma@example.com }
+                email: { type: string, format: email, example: priya.sharma@email.com }
                 password: { type: string, example: author123 }
       responses:
         '200':
@@ -326,6 +326,10 @@ components:
         royaltyPaid: { type: number }
         royaltyPending: { type: number }
         belowPayoutThreshold: { type: boolean }
+        royaltyPerCopy: { type: number, nullable: true }
+        lastPayoutDate: { type: string, format: date, nullable: true }
+        printPartner: { type: string, nullable: true }
+        availableOn: { type: array, items: { type: string }, example: [Amazon India, Flipkart, BookLeaf Store] }
     Message:
       type: object
       properties:

@@ -18,6 +18,10 @@ export function toBookDTO(b: Book) {
     mrp: toNumber(b.mrp.toString()),
     copiesSold: b.copiesSold,
     ...royaltySummary(b.royaltyEarned.toString(), b.royaltyPaid.toString()),
+    royaltyPerCopy: b.royaltyPerCopy === null ? null : toNumber(b.royaltyPerCopy.toString()),
+    lastPayoutDate: b.lastPayoutDate ? b.lastPayoutDate.toISOString().slice(0, 10) : null,
+    printPartner: b.printPartner,
+    availableOn: b.availableOn,
   };
 }
 export type BookDTO = ReturnType<typeof toBookDTO>;

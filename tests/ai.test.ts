@@ -214,5 +214,17 @@ describe('dataset normaliser', () => {
     });
     expect(out.authors[0]).toMatchObject({ id: 'A1', email: 'x@y.com' });
     expect(out.books[0]).toMatchObject({ id: 'B1', authorId: 'A1', mrp: '299', royaltyPaid: '750' });
+    expect(out.books[0]).toMatchObject({ royaltyPerCopy: null, lastPayoutDate: null, printPartner: null, availableOn: [] });
+  });
+  it('reads the extra book fields, with stores as a list or a comma-separated string', () => {
+    const out = normalizeDataset({
+      authors: [{ author_id: 'A1', name: 'X', email: 'x@y.com', books: [
+        { book_id: 'B1', title: 'T', author_royalty_per_copy: 35, last_royalty_payout_date: '2025-10-15', print_partner: 'In-House', available_on: ['Amazon India', 'Flipkart'] },
+        { book_id: 'B2', title: 'U', available_on: 'Amazon India, BookLeaf Store', last_royalty_payout_date: null },
+      ] }],
+    });
+    expect(out.books[0]).toMatchObject({ royaltyPerCopy: '35', printPartner: 'In-House', availableOn: ['Amazon India', 'Flipkart'] });
+    expect(out.books[0].lastPayoutDate?.toISOString().slice(0, 10)).toBe('2025-10-15');
+    expect(out.books[1]).toMatchObject({ royaltyPerCopy: null, lastPayoutDate: null, availableOn: ['Amazon India', 'BookLeaf Store'] });
   });
 });

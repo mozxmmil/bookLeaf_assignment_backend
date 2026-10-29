@@ -344,6 +344,11 @@ export function buildFacts(t: Pick<Ticket, 'createdAt' | 'category'>, book: Book
     `Royalty earned to date: ${formatINR(book.royaltyEarned)}; paid: ${formatINR(book.royaltyPaid)}; pending: ${formatINR(book.royaltyPending)}`,
     `Next scheduled payout date: ${formatDate(nextPayoutDate(today))}`,
   );
+  if (book.royaltyPerCopy !== null) facts.push(`Author royalty per copy: ${formatINR(book.royaltyPerCopy)}`);
+  if (book.lastPayoutDate) facts.push(`Last royalty payout: ${formatDate(new Date(book.lastPayoutDate))}`);
+  else if (book.royaltyPaid === 0) facts.push('No royalty payout has been made for this book yet.');
+  if (book.availableOn.length) facts.push(`Available on: ${book.availableOn.join(', ')}`);
+  if (book.printPartner) facts.push(`Print partner: ${book.printPartner}`);
   if (book.belowPayoutThreshold) facts.push(`Pending royalty is below the ${formatINR(MIN_PAYOUT)} payout threshold and will roll over to the next quarter.`);
   if (book.royaltyEarned === 0 && book.copiesSold === 0) facts.push('No sales recorded yet for this book.');
   if (book.royaltyEarned === 0 && book.copiesSold > 0) facts.push('Sales are recorded but royalty for the current quarter has not been calculated yet.');

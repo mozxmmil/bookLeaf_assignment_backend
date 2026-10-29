@@ -61,6 +61,8 @@ export function normalizeDataset(raw: Raw) {
     const pendingRaw = pick(b, 'royalty_pending', 'royaltyPending');
     // If only pending is provided, derive paid from it.
     const paid = paidRaw !== undefined ? num(paidRaw) : Math.max(0, earned - num(pendingRaw));
+    const perCopy = pick(b, 'author_royalty_per_copy', 'royalty_per_copy', 'royaltyPerCopy');
+    const stores = pick(b, 'available_on', 'availableOn') ?? [];
     return {
       id: String(pick(b, 'book_id', 'bookId', 'id') ?? `BK${String(i + 1).padStart(3, '0')}`),
       authorId: b.__authorId,
@@ -73,6 +75,11 @@ export function normalizeDataset(raw: Raw) {
       copiesSold: Math.round(num(pick(b, 'total_copies_sold', 'copies_sold', 'copiesSold', 'totalCopiesSold'))),
       royaltyEarned: String(earned),
       royaltyPaid: String(paid),
+      royaltyPerCopy: perCopy !== undefined ? String(num(perCopy)) : null,
+      lastPayoutDate: toDate(isoDate(pick(b, 'last_royalty_payout_date', 'lastRoyaltyPayoutDate', 'last_payout_date'))),
+      printPartner: (pick(b, 'print_partner', 'printPartner') ?? null) as string | null,
+      // Accepts a list or a comma-separated string.
+      availableOn: (Array.isArray(stores) ? stores : String(stores).split(',')).map((s) => String(s).trim()).filter(Boolean),
     };
   });
 
@@ -115,11 +122,12 @@ export async function seed(opts: { withDemoTickets?: boolean } = {}) {
 /** A few pre-classified tickets so the admin queue isn't empty on first demo. */
 async function seedDemoTickets(authorIds: string[], bookRows: { id: string; authorId: string }[]) {
   const bookOf = (aid: string) => bookRows.find((b) => b.authorId === aid)?.id ?? null;
+  // Author indexes follow the dataset: #2 (Ananya Reddy) has pending royalty but no payout yet.
   const demo = [
-    { a: 0, subject: 'Royalty not received for two quarters',
+    { a: 2, subject: 'Royalty not received for two quarters',
       description: 'I have not received any royalty payment for the last 6 months even though my dashboard shows pending royalty. Please check urgently.',
       category: 'ROYALTY_PAYMENTS', priority: 'CRITICAL', hoursAgo: 70 },
-    { a: 2, subject: 'Different ISBN on Amazon',
+    { a: 0, subject: 'Different ISBN on Amazon',
       description: 'My book shows a different ISBN on Amazon than the one printed on the physical copy. Readers are confused.',
       category: 'ISBN_METADATA', priority: 'HIGH', hoursAgo: 30 },
     { a: 6, subject: 'Can I update my author bio?',

@@ -147,7 +147,7 @@ Certbot's systemd timer renews the certificate, and the deploy hook reloads Ngin
 - Preview deployments get different URLs and are blocked by CORS. Test on the production URL, or add more origins, comma-separated.
 
 ## 8. Smoke test
-1. Log in as `priya.sharma@example.com / author123` and raise a ticket.
+1. Log in as `priya.sharma@email.com / author123` and raise a ticket.
 2. In another browser or an incognito window, log in as `admin@bookleaf.com / admin123`. The ticket should appear live with a category and priority.
 3. Open the ticket. An AI draft should load. Send the reply and check that the author window updates without a refresh.
 
