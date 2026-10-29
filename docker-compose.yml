@@ -1,0 +1,29 @@
+# Local PostgreSQL for BookLeaf (development). Run from backend/: docker compose up -d
+# Host port defaults to 5440 (NOT 5432) to avoid clashing with other Postgres instances.
+# Change it with POSTGRES_PORT in backend/.env, and update DATABASE_URL in the same file to match.
+#   Check a port is free on Windows:  netstat -ano | findstr :5440
+#   macOS/Linux:                      lsof -i :5440
+# Fixed project name keeps the existing container and data volume when this file moves.
+name: bookleaf-portal
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: bookleaf-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: bookleaf
+      POSTGRES_DB: bookleaf
+    ports:
+      - "${POSTGRES_PORT:-5440}:5432"
+    volumes:
+      - bookleaf_pgdata:/var/lib/postgresql/data
+      - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bookleaf"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  bookleaf_pgdata:

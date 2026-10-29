@@ -1,0 +1,11 @@
+# Used until Certbot has the certificate: plain HTTP, so Let's Encrypt can reach the challenge files.
+server {
+    listen 80;
+    server_name ${API_DOMAIN};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    include /etc/nginx/bookleaf/locations.conf;
+}

@@ -1,0 +1,338 @@
+{
+  "authors": [
+    {
+      "author_id": "AUT001",
+      "name": "Priya Sharma",
+      "email": "priya.sharma@example.com",
+      "city": "Mumbai",
+      "country": "India",
+      "joined_date": "2024-06-01",
+      "books": [
+        {
+          "book_id": "BK001",
+          "title": "The Silent River",
+          "isbn": "978-93-5000-101-1",
+          "genre": "Literary Fiction",
+          "publication_date": "2025-03-14",
+          "status": "Published & Live",
+          "mrp": 299,
+          "total_copies_sold": 842,
+          "total_royalty_earned": 61210,
+          "royalty_paid": 48000,
+          "royalty_pending": 13210
+        },
+        {
+          "book_id": "BK002",
+          "title": "Monsoon Letters",
+          "isbn": "978-93-5000-102-8",
+          "genre": "Poetry",
+          "publication_date": "2025-11-02",
+          "status": "Published & Live",
+          "mrp": 199,
+          "total_copies_sold": 120,
+          "total_royalty_earned": 3360,
+          "royalty_paid": 0,
+          "royalty_pending": 3360
+        }
+      ]
+    },
+    {
+      "author_id": "AUT002",
+      "name": "Rahul Verma",
+      "email": "rahul.verma@example.com",
+      "city": "Delhi",
+      "country": "India",
+      "joined_date": "2024-06-01",
+      "books": [
+        {
+          "book_id": "BK003",
+          "title": "Code of the Crown",
+          "isbn": "978-93-5000-103-5",
+          "genre": "Thriller",
+          "publication_date": "2024-08-21",
+          "status": "Published & Live",
+          "mrp": 349,
+          "total_copies_sold": 1530,
+          "total_royalty_earned": 128520,
+          "royalty_paid": 128520,
+          "royalty_pending": 0
+        },
+        {
+          "book_id": "BK004",
+          "title": "Delhi Diaries",
+          "isbn": "978-93-5000-104-2",
+          "genre": "Non-Fiction",
+          "publication_date": "2026-01-10",
+          "status": "Published & Live",
+          "mrp": 249,
+          "total_copies_sold": 60,
+          "total_royalty_earned": 780,
+          "royalty_paid": 0,
+          "royalty_pending": 780
+        }
+      ]
+    },
+    {
+      "author_id": "AUT003",
+      "name": "Ananya Iyer",
+      "email": "ananya.iyer@example.com",
+      "city": "Chennai",
+      "country": "India",
+      "joined_date": "2024-06-01",
+      "books": [
+        {
+          "book_id": "BK005",
+          "title": "Spices of Memory",
+          "isbn": "978-93-5000-105-9",
+          "genre": "Memoir",
+          "publication_date": "2025-06-30",
+          "status": "Published & Live",
+          "mrp": 399,
+          "total_copies_sold": 410,
+          "total_royalty_earned": 49200,
+          "royalty_paid": 30000,
+          "royalty_pending": 19200
+        }
+      ]
+    },
+    {
+      "author_id": "AUT004",
+      "name": "Michael Carter",
+      "email": "michael.carter@example.com",
+      "city": "Austin",
+      "country": "USA",
+      "joined_date": "2024-06-01",
+      "books": [
+        {
+          "book_id": "BK006",
+          "title": "Beyond the Horizon",
+          "isbn": "978-93-5000-106-6",
+          "genre": "Science Fiction",
+          "publication_date": "2025-02-18",
+          "status": "Published & Live",
+          "mrp": 499,
+          "total_copies_sold": 275,
+          "total_royalty_earned": 41250,
+          "royalty_paid": 41250,
+          "royalty_pending": 0
+        },
+        {
+          "book_id": "BK007",
+          "title": "The Last Algorithm",
+          "isbn": null,
+          "genre": "Science Fiction",
+          "publication_date": null,
+          "status": "Typesetting",
+          "mrp": 450,
+          "total_copies_sold": 0,
+          "total_royalty_earned": 0,
+          "royalty_paid": 0,
+          "royalty_pending": 0
+        }
+      ]
+    },
+    {
+      "author_id": "AUT005",
+      "name": "Sneha Kapoor",
+      "email": "sneha.kapoor@example.com",
+      "city": "Pune",
+      "country": "India",
+      "joined_date": "2024-06-01",
+      "books": [
+        {
+          "book_id": "BK008",
+          "title": "Little Steps",
+          "isbn": "978-93-5000-108-0",
+          "genre": "Children",
+          "publication_date": "2025-09-05",
+          "status": "Published & Live",
+          "mrp": 149,
+          "total_copies_sold": 980,
+          "total_royalty_earned": 23520,
+          "royalty_paid": 15000,
+          "royalty_pending": 8520
+        }
+      ]
+    },
+    {
+      "author_id": "AUT006",
+      "name": "Arjun Mehta",
+      "email": "arjun.mehta@example.com",
+      "city": "Bengaluru",
+      "country": "India",
+      "joined_date": "2024-06-01",
+      "books": [
+        {
+          "book_id": "BK009",
+          "title": "Startup Sutra",
+          "isbn": "978-93-5000-109-7",
+          "genre": "Business",
+          "publication_date": "2024-12-01",
+          "status": "Published & Live",
+          "mrp": 399,
+          "total_copies_sold": 2210,
+          "total_royalty_earned": 247520,
+          "royalty_paid": 200000,
+          "royalty_pending": 47520
+        },
+        {
+          "book_id": "BK010",
+          "title": "Founders Unfiltered",
+          "isbn": "978-93-5000-110-3",
+          "genre": "Business",
+          "publication_date": "2026-04-15",
+          "status": "Published & Live",
+          "mrp": 449,
+          "total_copies_sold": 35,
+          "total_royalty_earned": 0,
+          "royalty_paid": 0,
+          "royalty_pending": 0
+        }
+      ]
+    },
+    {
+      "author_id": "AUT007",
+      "name": "Emily Johnson",
+      "email": "emily.johnson@example.com",
+      "city": "Seattle",
+      "country": "USA",
+      "joined_date": "2024-06-01",
+      "books": [
+        {
+          "book_id": "BK011",
+          "title": "Whispers in Willow Lane",
+          "isbn": "978-93-5000-111-0",
+          "genre": "Romance",
+          "publication_date": "2025-05-22",
+          "status": "Published & Live",
+          "mrp": 299,
+          "total_copies_sold": 640,
+          "total_royalty_earned": 46080,
+          "royalty_paid": 46080,
+          "royalty_pending": 0
+        },
+        {
+          "book_id": "BK012",
+          "title": "Autumn Promise",
+          "isbn": null,
+          "genre": "Romance",
+          "publication_date": null,
+          "status": "Cover Design",
+          "mrp": 299,
+          "total_copies_sold": 0,
+          "total_royalty_earned": 0,
+          "royalty_paid": 0,
+          "royalty_pending": 0
+        }
+      ]
+    },
+    {
+      "author_id": "AUT008",
+      "name": "Farhan Qureshi",
+      "email": "farhan.qureshi@example.com",
+      "city": "Lucknow",
+      "country": "India",
+      "joined_date": "2024-06-01",
+      "books": [
+        {
+          "book_id": "BK013",
+          "title": "Urdu Nights",
+          "isbn": "978-93-5000-113-4",
+          "genre": "Poetry",
+          "publication_date": "2025-07-19",
+          "status": "Published & Live",
+          "mrp": 249,
+          "total_copies_sold": 88,
+          "total_royalty_earned": 2112,
+          "royalty_paid": 0,
+          "royalty_pending": 2112
+        },
+        {
+          "book_id": "BK014",
+          "title": "The Nawab's Secret",
+          "isbn": "978-93-5000-114-1",
+          "genre": "Historical Fiction",
+          "publication_date": "2024-10-11",
+          "status": "Published & Live",
+          "mrp": 399,
+          "total_copies_sold": 720,
+          "total_royalty_earned": 86400,
+          "royalty_paid": 86400,
+          "royalty_pending": 0
+        }
+      ]
+    },
+    {
+      "author_id": "AUT009",
+      "name": "Kavya Nair",
+      "email": "kavya.nair@example.com",
+      "city": "Kochi",
+      "country": "India",
+      "joined_date": "2024-06-01",
+      "books": [
+        {
+          "book_id": "BK015",
+          "title": "Backwaters",
+          "isbn": "978-93-5000-115-8",
+          "genre": "Literary Fiction",
+          "publication_date": "2025-12-08",
+          "status": "Published & Live",
+          "mrp": 349,
+          "total_copies_sold": 150,
+          "total_royalty_earned": 13500,
+          "royalty_paid": 0,
+          "royalty_pending": 13500
+        },
+        {
+          "book_id": "BK016",
+          "title": "Kerala Kitchen",
+          "isbn": "978-93-5000-116-5",
+          "genre": "Cookbook",
+          "publication_date": "2025-04-03",
+          "status": "Published & Live",
+          "mrp": 599,
+          "total_copies_sold": 505,
+          "total_royalty_earned": 90900,
+          "royalty_paid": 60000,
+          "royalty_pending": 30900
+        }
+      ]
+    },
+    {
+      "author_id": "AUT010",
+      "name": "Vikram Singh",
+      "email": "vikram.singh@example.com",
+      "city": "Jaipur",
+      "country": "India",
+      "joined_date": "2024-06-01",
+      "books": [
+        {
+          "book_id": "BK017",
+          "title": "Desert Warriors",
+          "isbn": "978-93-5000-117-2",
+          "genre": "Historical Fiction",
+          "publication_date": "2025-01-27",
+          "status": "Published & Live",
+          "mrp": 449,
+          "total_copies_sold": 390,
+          "total_royalty_earned": 46800,
+          "royalty_paid": 46800,
+          "royalty_pending": 0
+        },
+        {
+          "book_id": "BK018",
+          "title": "Mind Over Market",
+          "isbn": "978-93-5000-118-9",
+          "genre": "Self-Help",
+          "publication_date": "2026-02-14",
+          "status": "Published & Live",
+          "mrp": 299,
+          "total_copies_sold": 0,
+          "total_royalty_earned": 0,
+          "royalty_paid": 0,
+          "royalty_pending": 0
+        }
+      ]
+    }
+  ]
+}

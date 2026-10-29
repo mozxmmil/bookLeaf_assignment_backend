@@ -1,0 +1,13 @@
+node_modules
+dist
+src/generated
+tests
+scripts
+.env
+.env.*
+*.log
+# Deployment files live next to the code but are not part of the image
+Dockerfile
+docker-compose*.yml
+nginx
+docker

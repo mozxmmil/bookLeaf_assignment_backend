@@ -1,0 +1,81 @@
+# Production stack for a VPS: Postgres + API + Nginx (reverse proxy) + Certbot (Let's Encrypt HTTPS).
+# The frontend is deployed separately on Vercel. Full steps: ../DEPLOYMENT.md.
+# Run from backend/:
+#   cp .env.prod.example .env.prod      # then fill in the values
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+name: bookleaf-prod
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bookleaf
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.prod}
+      POSTGRES_DB: bookleaf
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # No published ports: only the api container can reach the database.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bookleaf -d bookleaf"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://bookleaf:${POSTGRES_PASSWORD}@db:5432/bookleaf
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.prod}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
+      GEMINI_FALLBACK_MODELS: ${GEMINI_FALLBACK_MODELS:-gemini-3.5-flash-lite}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:?set CLIENT_ORIGIN (your Vercel URL) in .env.prod}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/api/v1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in .env.prod}
+    # Serves HTTP until the certificate exists, then switches to HTTPS (see nginx/start.sh).
+    entrypoint: ["sh", "/etc/nginx/bookleaf/start.sh"]
+    volumes:
+      - ./nginx:/etc/nginx/bookleaf:ro
+      - certbot_www:/var/www/certbot:ro
+      - letsencrypt:/etc/letsencrypt:ro
+
+  certbot:
+    image: certbot/certbot:v3.0.1
+    restart: unless-stopped
+    depends_on:
+      - nginx
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in .env.prod}
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL:?set CERTBOT_EMAIL in .env.prod}
+    # Gets the first certificate, then renews it (see nginx/certbot.sh).
+    entrypoint: ["sh", "/scripts/certbot.sh"]
+    volumes:
+      - ./nginx/certbot.sh:/scripts/certbot.sh:ro
+      - certbot_www:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
+
+volumes:
+  pgdata:
+  certbot_www:
+  letsencrypt:
