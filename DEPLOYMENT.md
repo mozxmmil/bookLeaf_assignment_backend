@@ -5,20 +5,20 @@ Recommended setup: **Vercel** (frontend) + **one VPS** with **Nginx** and **Dock
 ```
 Browser ──HTTPS──▶ Vercel (Next.js, frontend repo)
    │
-   └──HTTPS──▶ api.yourdomain.com ──▶ Nginx :443 ──▶ 127.0.0.1:4815 ──▶ api (Docker) ──▶ db (Docker)
-                                      (on the VPS,     └──────── docker-compose.prod.yml ────────┘
-                                       HTTPS by Certbot)
+   └──HTTPS──▶ api-assignments.muzammil.live ──▶ Nginx :443 ──▶ 127.0.0.1:4815 ──▶ api (Docker) ──▶ db (Docker)
+                                                 (on the VPS,                      └ docker-compose.prod.yml ─┘
+                                                  HTTPS by Certbot)
 ```
 
 | Part | Repo | Runs on | Config |
 |---|---|---|---|
 | Frontend | [`bookLeaf_assignment_frontend`](https://github.com/mozxmmil/bookLeaf_assignment_frontend) | Vercel | `NEXT_PUBLIC_API_URL` in Vercel's project settings |
 | API + Postgres | `bookLeaf_assignment_backend` (this repo) | VPS, in Docker | `.env` in the repo folder on the VPS (copied from `.env.prod.example`) |
-| Reverse proxy | this repo, `nginx/bookleaf-api.conf` | VPS, Nginx installed on the server | domain name in the same file |
+| Reverse proxy | this repo, `nginx/bookleaf-api.conf` | VPS, Nginx installed on the server | domain `api-assignments.muzammil.live` and the certificate paths are in the file |
 
 - The API runs as a long-lived server, not on serverless functions, because it holds SSE connections open.
 - Only Nginx (ports 80 and 443) is reachable from the internet. The API is published on `127.0.0.1` only, and Postgres is not published at all.
-- **Certbot** gets a free Let's Encrypt certificate, adds the HTTPS settings to the Nginx file, and renews the certificate automatically.
+- **Certbot** gets a free Let's Encrypt certificate and renews it automatically. The Nginx file already has the HTTPS settings and points at that certificate.
 - If the VPS already runs Nginx for other sites, that's fine: this adds one more site file and doesn't change the others.
 - Built for a shared VPS: the API uses host port **4815** (not 3000/4000/5000/8000/8080), Postgres publishes no port, and the containers, network and volume are all prefixed `bookleaf-prod`, so nothing clashes with other apps.
 
@@ -59,8 +59,8 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 - Also open ports 80 and 443 in your cloud provider's firewall if it has one (AWS security group, Oracle security list, and so on).
 
 ## 2. Point the domain at the VPS
-Add a DNS **A record**: `api.yourdomain.com → <VPS IP>`. If you use Cloudflare, set it to "DNS only" (grey cloud) at first.
-Wait until `ping api.yourdomain.com` shows the VPS IP before step 6. Skip this step if you use `sslip.io`.
+In the DNS panel of `muzammil.live`, add an **A record**: host `api-assignments` → `<VPS IP>`. If you use Cloudflare, set it to "DNS only" (grey cloud).
+Check that it matches the server before step 6: `curl -4 ifconfig.me` on the VPS must print the same IP as `nslookup api-assignments.muzammil.live`.
 
 ## 3. Get the code and configure it
 The repo is private, so give the server a read-only **deploy key**:
@@ -84,6 +84,7 @@ nano .env               # CLIENT_ORIGIN, POSTGRES_PASSWORD, JWT_SECRET, GEMINI_A
 - You don't create the database user by hand. On its first start, the Postgres container creates `POSTGRES_USER` with `POSTGRES_PASSWORD` and the database `POSTGRES_DB`. The API builds its connection string from the same three values, and creates the tables itself (migrations run on start).
 - `DATABASE_URL`, `PORT` and `NODE_ENV` are set by `docker-compose.prod.yml` and win over `.env`, so leave them out.
 - If you don't have the Vercel URL yet, leave the placeholder in `CLIENT_ORIGIN` and fix it in step 7.
+- Already have a filled `.env` on your laptop? Copy it instead of steps above: `scp .env user@<VPS IP>:~/bookLeaf_assignment_backend/.env`, then `chmod 600 .env` on the server.
 
 ## 4. Start the API and database
 First check that port 4815 is free (no output = free). If it's taken, put another free port in `API_PORT` in `.env` and in both `proxy_pass` lines of `nginx/bookleaf-api.conf`.
@@ -105,28 +106,33 @@ dc exec api node dist/db/seed.js
 ```
 > ⚠️ The seed **clears all tables** before loading `data/bookleaf_sample_data.json`. Run it once, never on a live database that has real tickets.
 
-## 6. Nginx site + HTTPS
+## 6. HTTPS certificate + Nginx site
+`nginx/bookleaf-api.conf` already has the domain and the HTTPS settings, and points at the Let's Encrypt certificate. So get the certificate **first**:
+```bash
+sudo certbot certonly --nginx -d api-assignments.muzammil.live --deploy-hook "systemctl reload nginx"
+sudo certbot certificates    # path should be /etc/letsencrypt/live/api-assignments.muzammil.live/
+```
+- `certonly` only gets the certificate and doesn't edit any Nginx file. The first run asks for an email and the terms.
+- If `certbot certificates` shows another folder (for example `...muzammil.live-0001`), use that folder in both `ssl_certificate` lines.
+
+Then enable the site:
 ```bash
 sudo cp nginx/bookleaf-api.conf /etc/nginx/sites-available/bookleaf-api
-sudo sed -i 's/api.example.com/api.yourdomain.com/' /etc/nginx/sites-available/bookleaf-api   # your domain
 sudo ln -s /etc/nginx/sites-available/bookleaf-api /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
+sudo nginx -t && sudo systemctl reload nginx    # if nginx -t fails, don't reload: fix the error first
 
-curl http://api.yourdomain.com/api/v1/health    # works over HTTP now
-
-sudo certbot --nginx -d api.yourdomain.com      # asks for an email and the terms once
+curl https://api-assignments.muzammil.live/api/v1/health    # {"status":"ok",...}
+curl -I http://api-assignments.muzammil.live                # 301 → https
+sudo certbot renew --dry-run                                 # renewal works
 ```
-Certbot gets the certificate and edits `/etc/nginx/sites-available/bookleaf-api`:
-- it adds `listen 443 ssl` and the certificate paths;
-- it redirects HTTP to HTTPS.
-
-Renewal is automatic through a systemd timer. Check it with `sudo certbot renew --dry-run`.
-
-Check `https://api.yourdomain.com/api/v1/health` and `https://api.yourdomain.com/api/docs` in the browser.
+Open `https://api-assignments.muzammil.live/api/docs` in the browser.
 
 What the Nginx file does (`nginx/bookleaf-api.conf`):
-- forwards all traffic to the API on `127.0.0.1:4815`, with the usual `X-Forwarded-*` headers (the API trusts one proxy hop);
-- turns buffering off for `/api/v1/stream` and keeps it open for up to an hour, so SSE live updates reach the browser at once.
+- port 80 redirects everything to HTTPS;
+- port 443 serves HTTPS with the Let's Encrypt certificate and forwards all traffic to the API on `127.0.0.1:4815`, with the usual `X-Forwarded-*` headers (the API trusts one proxy hop);
+- buffering is off for `/api/v1/stream`, which stays open for up to an hour, so SSE live updates reach the browser at once.
+
+Certbot's systemd timer renews the certificate, and the deploy hook reloads Nginx so it uses the new one.
 
 ## 7. Frontend on Vercel
 | Setting | Value |
@@ -134,7 +140,7 @@ What the Nginx file does (`nginx/bookleaf-api.conf`):
 | Repository | Import `bookLeaf_assignment_frontend` from GitHub |
 | Root directory | leave as is (the repo root is the Next.js app) |
 | Framework | Next.js (auto-detected) |
-| Env var | `NEXT_PUBLIC_API_URL=https://api.yourdomain.com` |
+| Env var | `NEXT_PUBLIC_API_URL=https://api-assignments.muzammil.live` |
 
 - `NEXT_PUBLIC_*` values are built into the bundle, so after changing one, **redeploy** on Vercel.
 - Then set `CLIENT_ORIGIN` in `.env` to the Vercel production URL exactly, with no trailing slash. Apply it with `dc up -d` (this recreates only the API).
@@ -165,8 +171,9 @@ What the Nginx file does (`nginx/bookleaf-api.conf`):
 | `dc up` says `set POSTGRES_... in .env` (or `env file .env not found`) | `.env` is missing or incomplete. It must sit next to `docker-compose.prod.yml` and be named exactly `.env`. |
 | API logs show `password authentication failed` | `POSTGRES_USER`, `POSTGRES_PASSWORD` or `POSTGRES_DB` was changed after the first start. Postgres only reads them when its volume is empty. Put the old values back, or, if the DB has nothing to keep, run `dc down -v && dc up -d` (**deletes all data**) and seed again. |
 | `dc up` says port 4815 is already allocated | Another app on the VPS uses it. Pick a free port (`sudo ss -tlnp` lists used ones), set it as `API_PORT` in `.env`, put the same port in both `proxy_pass` lines, then `dc up -d` and reload Nginx. |
-| Certbot fails | DNS doesn't point at the VPS yet, or port 80 is closed in the cloud firewall |
-| Your domain shows the default "Welcome to nginx" page | `server_name` in the site file still says `api.example.com`, or the site isn't linked into `sites-enabled` |
+| Certbot fails | DNS doesn't point at this VPS (compare `curl -4 ifconfig.me` with `nslookup api-assignments.muzammil.live`), or port 80 is closed in the cloud firewall |
+| `nginx -t` says `cannot load certificate .../fullchain.pem` | The certificate doesn't exist yet, or has another folder name. Run the `certbot certonly` command first, and check the path with `sudo certbot certificates`. |
+| Your domain shows the default "Welcome to nginx" page or another site | The site isn't linked into `sites-enabled`, or Nginx wasn't reloaded after `nginx -t` |
 | Browser console shows a CORS error | `CLIENT_ORIGIN` doesn't exactly match the Vercel URL |
 | Browser shows "mixed content" | `NEXT_PUBLIC_API_URL` uses `http://`, or Vercel wasn't redeployed after you changed it |
 | Build killed on a small VPS | Not enough RAM. Add swap (step 1). |

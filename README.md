@@ -8,13 +8,16 @@ The project is split into two repositories. **This repo is the backend and holds
 |---|---|
 | **Backend (this repo)** | Express API, database, AI, Docker/Nginx deployment, docs, tests |
 | **Frontend repo** | [`bookLeaf_assignment_frontend`](https://github.com/mozxmmil/bookLeaf_assignment_frontend): Next.js author and admin portals |
-| **Live demo** | _add your deployed URL here_ |
-| **API docs** | `<api-url>/api/docs` (Swagger UI) · [`openapi.yaml`](./openapi.yaml) |
+| **Live demo** | https://book-leaf-assignment-frontend.vercel.app |
+| **Live API** | https://api-assignments.muzammil.live |
+| **API docs** | [Swagger UI](https://api-assignments.muzammil.live/api/docs) · [`openapi.yaml`](./openapi.yaml) |
 | **Write-up** | [`WRITEUP.md`](./WRITEUP.md) |
 | **Deployment** | [`DEPLOYMENT.md`](./DEPLOYMENT.md): frontend on Vercel, backend on a VPS with Docker |
 | **Planning docs** | [`docs/`](./docs/): PRD, UI/UX, architecture, API spec, AI strategy |
 
 ### Test credentials
+
+Sign in on the live demo with any of these:
 
 | Role | Email | Password |
 |---|---|---|

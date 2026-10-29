@@ -33,7 +33,6 @@ Goal: clean, functional, fast. Not pixel-perfect.
 │  Email    [______________]   │
 │  Password [______________]   │
 │        [   Sign in   ]       │
-│  Demo: author / admin creds  │
 └──────────────────────────────┘
 ```
 
