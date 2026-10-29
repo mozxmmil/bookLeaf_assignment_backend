@@ -1,0 +1,7 @@
+{
+  "name": "bookleaf-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node portal.e2e.mjs", "test:shots": "SHOTS=1 node portal.e2e.mjs" },
+  "devDependencies": { "playwright": "^1.48.0" }
+}
