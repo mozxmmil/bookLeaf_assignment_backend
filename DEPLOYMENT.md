@@ -29,23 +29,34 @@ Browser ──HTTPS──▶ Vercel (Next.js, frontend repo)
 - Both repos on GitHub (**private**) and a Vercel account.
 
 ## 1. Prepare the VPS (once)
+On a server that already runs other apps, first check what is there, and install only what is missing:
 ```bash
-sudo apt update && sudo apt upgrade -y
+docker compose version                  # prints a version → Docker is ready
+nginx -v                                # prints a version → Nginx is ready
+sudo ss -tlnp | grep -E ':(80|443) '    # should show nginx, or nothing
+sudo ufw status                         # active or inactive
+```
+- If Docker already works, **don't** run the Docker install script below. It can upgrade Docker and restart every running container.
+- If something other than Nginx (Apache, Caddy, a Docker container) holds ports 80/443, the Nginx steps in this guide don't apply as written.
 
-# Docker + Compose plugin
+```bash
+sudo apt update
+
+# Docker + Compose plugin (only if missing)
 curl -fsSL https://get.docker.com | sh
 
-# Nginx + Certbot (skip nginx if it is already installed)
+# Certbot, plus Nginx if missing
 sudo apt install -y nginx certbot python3-certbot-nginx
 
-# Firewall: SSH + web only
-sudo ufw allow OpenSSH && sudo ufw allow 'Nginx Full' && sudo ufw enable
+# Firewall: allow web traffic
+sudo ufw allow 'Nginx Full'
 
 # Only on 1 GB machines: 2 GB swap
 sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
-Also open ports 80 and 443 in your cloud provider's firewall if it has one (AWS security group, Oracle security list, and so on).
+- If ufw is **inactive** on a server with other apps, leave it off unless you first allow SSH and every port those apps use; turning it on can lock them (and you) out. On a fresh VPS: `sudo ufw allow OpenSSH && sudo ufw allow 'Nginx Full' && sudo ufw enable`.
+- Also open ports 80 and 443 in your cloud provider's firewall if it has one (AWS security group, Oracle security list, and so on).
 
 ## 2. Point the domain at the VPS
 Add a DNS **A record**: `api.yourdomain.com → <VPS IP>`. If you use Cloudflare, set it to "DNS only" (grey cloud) at first.
@@ -58,9 +69,11 @@ ssh-keygen -t ed25519 -f ~/.ssh/bookleaf_deploy -N ""
 cat ~/.ssh/bookleaf_deploy.pub
 ```
 Copy the printed line into GitHub → this repo → Settings → Deploy keys → Add deploy key. Leave "Allow write access" off.
+
+The key gets its own host name (`github-bookleaf`), so it doesn't interfere with other GitHub keys on the server:
 ```bash
-printf 'Host github.com\n  IdentityFile ~/.ssh/bookleaf_deploy\n' >> ~/.ssh/config
-git clone git@github.com:mozxmmil/bookLeaf_assignment_backend.git
+printf '\nHost github-bookleaf\n  HostName github.com\n  User git\n  IdentityFile ~/.ssh/bookleaf_deploy\n  IdentitiesOnly yes\n' >> ~/.ssh/config
+git clone git@github-bookleaf:mozxmmil/bookLeaf_assignment_backend.git
 cd bookLeaf_assignment_backend    # every command below runs from here
 
 cp .env.prod.example .env
