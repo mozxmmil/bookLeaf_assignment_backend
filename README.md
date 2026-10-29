@@ -62,10 +62,10 @@ The project is split into two repositories. **This repo is the backend and holds
 bookLeaf_assignment_backend/     (this repo)
 ├── .env.example              # backend config: DB, JWT, Gemini, CORS, dev DB port
 ├── docker-compose.yml        # dev: Postgres on host port 5440
-├── docker-compose.prod.yml   # VPS: Postgres + API + Nginx + Certbot (HTTPS), see DEPLOYMENT.md
+├── docker-compose.prod.yml   # VPS: Postgres + API (API on 127.0.0.1:4815 for Nginx), see DEPLOYMENT.md
 ├── .env.prod.example         # VPS config for docker-compose.prod.yml
 ├── Dockerfile                # API image
-├── nginx/                    # reverse proxy config (SSE unbuffered) + Let's Encrypt scripts
+├── nginx/bookleaf-api.conf   # Nginx site for the VPS: reverse proxy, SSE unbuffered (HTTPS via Certbot)
 ├── docker/                   # init SQL (creates the test database)
 ├── prisma/                   # schema.prisma + migrations
 ├── data/                     # bookleaf_sample_data.json (seed source)
